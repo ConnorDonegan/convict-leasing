@@ -13,7 +13,7 @@ This repo currently includes the following files:
       - Local empirical bayes estimates
       - standardized rates that adjust for the racial composition of each county population 
       
-  - `maps` contains .png files of the maps
+  - `figures` contains .png files of the maps
  
  The standardized rates follow the common approach from epidemiology, where local counts are compared to their expected risk-adjusted count: (observed - expected)^2/expected, which follows a chi-square distribution. This script calculates those as well as [Dykes and Unwin's](http://www.agocg.ac.uk/reports/visual/casestud/dykes/dykes.pdf "Maps of the Census: a rough guide") method which maintains the sign of the difference, to identify counties above and below the expected rate of occurence: (observed - expected)/sqrt(expected). 
 The standardized rates calculated here also make use of the local EB estimates by making the observed count of sentences equal to the local EB rate*population. 
