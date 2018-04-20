@@ -94,6 +94,17 @@ sentences <- census[, sents.index]
 
 # interpolate population between census years ====
 
+  # linear interpolation of inter-cencus population data may have a much higher
+  # range of error when population is small, particularly when under 5,000. 
+  # See Wedden et al., Evaluating Linearly Interpolated Intercensal Estimates...',
+  # Population Research and Policy Review (2015).
+  # In the start year (1905) 85% of the county-year populations used here are greater than 5,000;
+  # the smallest is 3,838. In the end year (1919) 95% are greater than 5,000.
+x <- dcounty[which(dcounty$year == '1905'), ]
+y <- dcounty[which(dcounty$year == '1919'), ]
+quantile(x$population_black + x$population_white, na.rm=T, probs = seq(0, 1, .05))
+quantile(y$population_black + y$population_white, na.rm=T, probs = seq(0, 1, .05))
+
 population_interpolation <- function(data) {
   
   counties <- data$county
