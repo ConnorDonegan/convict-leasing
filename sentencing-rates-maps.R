@@ -16,7 +16,7 @@ lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
 # load data and calculate mean (state wide) sentencing rates by race during the convict leasing program ====
 
-dcounty <- readRDS("data/sentencing.rds")
+dcounty <- read_csv("data/sentencing.csv")
 
 bpop <- sum(dcounty$population_black, na.rm=T)
 wpop <- sum(dcounty$population_white, na.rm=T)

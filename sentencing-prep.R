@@ -50,8 +50,9 @@ pkgs <- c("zoo", "tidyverse")
 lapply(pkgs, library, character.only=TRUE)
 
 # check for consistency of census population counts ====
-  
-  # This process was undertaken to avoid transcription errors. 
+
+  # The author entered all prison and census data by hand.
+  # The following process was undertaken to find transcription errors. 
   # In the process, errors in the original file were identified.
   # See that racial components of each county population sum to the total county population.
 census <- read.csv("data/FL_pop_char.csv")
@@ -98,12 +99,10 @@ sentences <- census[, sents.index]
   # range of error when population is small, particularly when under 5,000. 
   # See Wedden et al., Evaluating Linearly Interpolated Intercensal Estimates...',
   # Population Research and Policy Review (2015).
-  # In the start year (1905) 85% of the county-year populations used here are greater than 5,000;
-  # the smallest is 3,838. In the end year (1919) 95% are greater than 5,000.
-x <- dcounty[which(dcounty$year == '1905'), ]
-y <- dcounty[which(dcounty$year == '1919'), ]
-quantile(x$population_black + x$population_white, na.rm=T, probs = seq(0, 1, .05))
-quantile(y$population_black + y$population_white, na.rm=T, probs = seq(0, 1, .05))
+  # Half of the counties have white population over 5,000 in 1900,
+  # Only about 70% of black population counts were over 5,000 in 1900
+quantile(black.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
+quantile(white.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
 
 population_interpolation <- function(data) {
   
@@ -151,7 +150,7 @@ sentences <- sentences %>%
   as.tibble()
 
 # save ====
-saveRDS(sentences, "data/sentencing.rds")
+write_csv(sentences, "data/sentencing.csv")
 
 
 
