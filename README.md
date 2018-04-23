@@ -17,6 +17,6 @@ This repo currently includes the following files:
       
   - `figures` contains `.png` files of all maps and plots.
  
- The standardized sentencing rates from `sentencing-rates-maps.R` follow a common approach in epidemiology, where local counts are compared to their expected risk-adjusted count: (observed - expected)^2/expected. This script calculates those as well as [Dykes and Unwin's](http://www.agocg.ac.uk/reports/visual/casestud/dykes/dykes.pdf "Maps of the Census: a rough guide") method which preserves the sign of the difference, to identify counties above and below the expected rate of occurrence: (observed - expected)/sqrt(expected). 
+ The standardized sentencing rates from `sentencing-rates-maps.R` follow a common approach in epidemiology, where local counts are compared to their expected risk-adjusted count: (observed - expected)^2/expected. This script calculates those chi square statistics as well as [Dykes and Unwin's](http://www.agocg.ac.uk/reports/visual/casestud/dykes/dykes.pdf "Maps of the Census: a rough guide") method which preserves the sign of the difference, to identify counties above and below the expected rate of occurrence: (observed - expected)/sqrt(expected). 
 The standardized rates calculated here also make use of the local EB estimates by making the observed count of sentences equal to the local EB rate*population. 
 
