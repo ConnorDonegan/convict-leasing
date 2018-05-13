@@ -100,7 +100,7 @@ sentences <- census[, sents.index]
   # See Wedden et al., Evaluating Linearly Interpolated Intercensal Estimates...',
   # Population Research and Policy Review (2015).
   # Half of the counties have white population over 5,000 in 1900,
-  # Only about 70% of black population counts were over 5,000 in 1900
+  # Only about 70% of black population counts were over 5,000 in 1900.
 quantile(black.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
 quantile(white.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
 

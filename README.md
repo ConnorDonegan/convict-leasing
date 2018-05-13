@@ -13,10 +13,12 @@ This repo currently includes the following files:
       - Local empirical Bayes estimates
       - standardized rates that account for the racial composition of each county population 
       
-  - `mortality-by-age.R` produces bar plots illustrating the distribution of prisoner deaths by age, and as well as the ages of death for whites and blacks in the Florida general population.
+  - `mortality.R` produces bar plots illustrating the distribution of prisoner deaths by age, as well as frequency of death by age group and race in the Florida general population; and plots the number of deaths and mortality rate among state prisoners (1870-1925).
+  
+  - `prisoner-characteristics.R` generates figures on state prison sentences by race, gender, and place of origin; as well as pardons and pardon rates by race.
       
   - `figures` contains `.png` files of all maps and plots.
  
- The standardized sentencing rates from `sentencing-rates-maps.R` follow a common approach in epidemiology, where local counts are compared to their expected risk-adjusted count: (observed - expected)^2/expected. This script calculates those chi square statistics as well as [Dykes and Unwin's](http://www.agocg.ac.uk/reports/visual/casestud/dykes/dykes.pdf "Maps of the Census: a rough guide") method which preserves the sign of the difference, to identify counties above and below the expected rate of occurrence: (observed - expected)/sqrt(expected). 
-The standardized rates calculated here also make use of the local EB estimates by making the observed count of sentences equal to the local EB rate*population. 
+ The standardized sentencing rates from `sentencing-rates-maps.R` follow a common approach in epidemiology, where local counts are compared to their expected risk-adjusted count: (observed - expected)^2/expected. This script calculates those chi square statistics as well as [Dykes and Unwin's](http://www.agocg.ac.uk/reports/visual/casestud/dykes/dykes.pdf "Maps of the Census: a rough guide") method which preserves the sign of the difference between observed and expected values (observed - expected)/sqrt(expected). This allows visual identification of counties above and below the expected rate of sentencing. 
+The standardized rates calculated here also make use of the local EB estimates by making the observed count of sentences equal to the local EB rate*population (for white and non-white population respectively).
 

@@ -21,10 +21,10 @@ dcounty <- read_csv("data/sentencing.csv")
 bpop <- sum(dcounty$population_black, na.rm=T)
 wpop <- sum(dcounty$population_white, na.rm=T)
 
-dstate <- read_csv("data/penal_stats.csv")
+dstate <- read_csv("data/prisoner_char.csv")
 dstate <- dstate %>%
-  dplyr::select(Year, black_male, white_male, black_female, white_female) %>%
-  transmute(Year = Year,
+  dplyr::select(year, black_male, white_male, black_female, white_female) %>%
+  transmute(Year = year,
             black = black_male + black_female,
             white = white_male + white_female) %>%
   filter(Year > 1904 & Year < 1920)
@@ -85,11 +85,12 @@ sRates <- dcounty %>%
 
   # View shrinkage of raw rates by local eb estimate
 par(mfcol =  c(2,2), cex = .75)
-plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = 'Raw (b) and EB (r)')
+plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = "County Sentencing Rates")
 lines(density(sRates$raw_Rate), lwd = 2, col = 'blue')
-hist((sRates$eb_shrinkage), 50, main = 'diff')
-plot(density(((sRates$eb_shrinkage))), main = 'diff')
-boxplot(sRates$eb_shrinkage)
+legend(x=0, y = 2.5, legend = c("Raw rate", "EB rate"), fill = c("blue", "red"))
+hist((sRates$eb_shrinkage), 50, main = 'difference')
+plot(density(((sRates$eb_shrinkage))), main = 'difference')
+boxplot(sRates$eb_shrinkage, main = "difference")
 
   # plot spatial distribution of rates and shrinkage
 fl <- merge(fl, sRates)
@@ -142,23 +143,26 @@ ebrate_map <- tm_shape(fl) +
              lwd = 2.5) +
   tm_credits(bg.alpha = .15, 
              bg.color = "azure", 
-    text = "*Plantation belt highlighted.\nEstimates obtained using local\nEmpirical Bayes method.\nSource: Florida Dept. of Agriculture.")
+    text = "*Plantation belt highlighted. Estimates obtained using local Empirical Bayes method.\nSource: Florida Dept. of Agriculture and author's calculations.")
 ebrate_map
-save_tmap(tm = ebrate_map, filename = "figures/sentencing-rates-local-EB.png")
+save_tmap(tm = ebrate_map, 
+          filename = "figures/sentencing-rates-local-EB.png",
+          units = "in", width = 6)
 
 brks <- c(-10, -6, -2, 0, 2, 6, 10, 20, 34)
 pal <- rev( brewer.pal(n = 7, name = "RdBu") )
 standardized_map <- tm_shape(fl) + 
   tm_fill("stand_Rate",
-          title = "Standardized\nSentencing\nRates, 1905-1919",
+          title = "Standardized\nsentencing rates\n(chi-square statistics),\n1905-1919",
           type = "fixed",
           legend.hist=T,
-          palette = pal, 
+          palette = "-RdBu", 
           breaks = brks,
           frame = F
           ) +
   tm_borders(col="gray35") +
   tm_legend(legend.hist.bg.color = "azure", 
+            title.size = 1.25,
             legend.position = c("left", "bottom")) +
   tm_layout(bg.color = "lightblue",
             legend.hist.height=.25,
@@ -172,6 +176,9 @@ tm_shape(plantation_belt) +
              lwd = 2.5) +
   tm_credits(bg.alpha = .15, 
              bg.color = "azure", 
-             text = "*Plantation belt highlighted.\nEstimates account for race-based risk.\nSource: Florida Dept. of Agriculture.")
+             size = 3,
+             text = "*Plantation belt highlighted. Estimates account for racial composition and\nsize of the population. Source: Florida Dept. of Agriculture and author's calculations.")
 standardized_map
-save_tmap(tm = standardized_map, filename = "figures/sentencing-rates-standardized.png")
+save_tmap(tm = standardized_map, 
+          filename = "figures/sentencing-rates-standardized.png",
+          units = "in", width = 6)
