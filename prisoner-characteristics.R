@@ -135,7 +135,7 @@ ggsave("figures/pardons.png", g,
   # 308 sentences that year.
   # The numbers will simply be reported as they are in the record, 
   # using the actual count of sentences rather than the sum of prisoners by origin.
-origins <- select(penal_data,
+origins <- dplyr::select(penal_data,
               year, florida, alabama, georgia, northcarolina, southcarolina,
               other_south, other_regioncountry, not_given)
 
