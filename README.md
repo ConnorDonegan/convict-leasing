@@ -13,6 +13,8 @@ This repo currently includes the following files:
       - Local empirical Bayes estimates
       - standardized rates that account for the racial composition of each county population 
       
+  - `convict-leasing-revenue.R` plots the annual revenue derived from leasing state prisoners, 1877-1919.
+      
   - `mortality.R` produces bar plots illustrating the distribution of prisoner deaths by age, as well as frequency of death by age group and race in the Florida general population; and plots the number of deaths and mortality rate among state prisoners (1870-1925).
   
   - `prisoner-characteristics.R` generates figures on state prison sentences by race, gender, and place of origin; as well as pardons and pardon rates by race.
