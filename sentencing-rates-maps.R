@@ -96,12 +96,18 @@ sRates <-  arrange(sRates, SIR)
 sRates$name <- factor(sRates$name, ordered=T, levels = sRates$name)
 SIR_plot <- ggplot(sRates) +
   geom_point(aes(x=name, y = SIR)) +
-  geom_errorbar(aes(x=name, ymin = SIR_lwr, ymax = SIR_upr)) +
+  geom_errorbar(aes(x=name, ymin = SIR_lwr, ymax = SIR_upr),
+                width = 0,
+                size = .25) +
   geom_hline(yintercept = 1) +
   coord_flip() +
   scale_x_discrete(name = NULL) +
   scale_y_continuous(breaks = seq(0, 4, .5),name = NULL) +
-  ggtitle("Standardized Sentencing Rates, 1905-1919")
+  labs(title = "Standardized sentencing rates, 1905-1919",
+       subtitle = "with 95% confidence intervals") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11),
+        plot.subtitle = element_text(size = 9))
 
 ggsave("figures/sentencing-rates-standardized-plot.png", 
        SIR_plot,
