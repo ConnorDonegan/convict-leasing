@@ -1,18 +1,18 @@
 
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Calculate county sentencing rates using local empirical bayes estimates and 
-# risk (race) adjusted chi square statistics to distinguish between counties with 
-# higher or lower than expected sentencing rates.
-# The expected rate is based on the statewide sentencing rate for white and black residents.
+# Calculate county sentencing rates using local empirical bayes estimates and standardized sentencing
+# rates to distinguish between counties with  higher or lower than expected rates.
+# The expected rate is based on the statewide sentencing rate for white and black residents respectively.
 
 # This data set includes years corresponding to the availability of county sentencing data (starting 1905),
 # until the end of convict leasing (1919). Counties that incorporated after the 1910 decennial census
-# are excluded. The map uses the Florida county boundaries as of 1910.
+# are excluded. The map uses the historical Florida county boundaries of 1910.
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # load packages ====
 pkgs <- c("tidyverse", "classInt", "RColorBrewer", "ggmap", "GISTools", "maptools", "sf", 
-          "tmap", "USAboundaries", "spdep", "sp", "raster", "scales", "pracma")
+          "ggmap", "tmap", "USAboundaries", "spdep", "sp", "raster", "scales", "pracma")
 lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
 # load data and calculate mean (state wide) sentencing rates by race during the convict leasing program ====
@@ -55,12 +55,6 @@ bg <- as(bg, "Spatial")
 bg <- unionSpatialPolygons(bg, bg$state_terr)
 bg <- spTransform(bg, CRS(FLaea))
 
-  # to highlight historic plantation belt
-plantation_belt <- distinct(dcounty, county, .keep_all=T) %>% mutate(name = str_to_upper(county))
-plantation_belt <- merge(fl, plantation_belt)
-plantation_belt <- plantation_belt[which(plantation_belt$plantation_belt == 1), ]
-plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$plantation_belt)
-
 # calculate county sentencing rates and SIR ====
 
 sRates <- dcounty %>%
@@ -73,7 +67,9 @@ sRates <- dcounty %>%
                    sents_upr = qpois(.95, sents),
                    pop = sum(population, na.rm=T),
                    wpop = sum(population_white, na.rm = T),
-                   bpop = sum(population_black, na.rm = T)) %>%
+                   bpop = sum(population_black, na.rm = T),
+                   pct_agricultural = unique(pct_agricultural_1910),
+                   plantation_belt = unique(plantation_belt)) %>%
   ungroup() %>%
   mutate(
     # risk-adjusted expected number of sentences based on mean rates
@@ -89,9 +85,14 @@ sRates <- dcounty %>%
   mutate(raw_Rate = 1000 * raw_Rate,
          eb_Rate = 1000 * eb_Rate)
 
-# visualize results ====
+# View shrinkage of raw rates by local eb estimate ====
 
-# plot standardized incidence rates
+plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = "County Sentencing Rates")
+lines(density(sRates$raw_Rate), lwd = 2, col = 'blue')
+legend(x=0, y = 2.5, legend = c("Raw rate", "EB rate"), fill = c("blue", "red"))
+
+# plot standardized incidence rates ====
+
 sRates <-  arrange(sRates, SIR)
 sRates$name <- factor(sRates$name, ordered=T, levels = sRates$name)
 SIR_plot <- ggplot(sRates) +
@@ -115,22 +116,87 @@ ggsave("figures/sentencing-rates-standardized-plot.png",
        height = 8,
        units = "in")
 
-  # View shrinkage of raw rates by local eb estimate
-plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = "County Sentencing Rates")
-lines(density(sRates$raw_Rate), lwd = 2, col = 'blue')
-legend(x=0, y = 2.5, legend = c("Raw rate", "EB rate"), fill = c("blue", "red"))
+# get lat-lon for Florida's largest cities plus Tallahassee ====
 
-  # plot spatial distribution of rates
-fl <- merge(fl, sRates)
-pal <- brewer.pal(n = 6, name = "Purples")
-brks <- classIntervals(fl$raw_Rate, style = 'jenks', n = 6)$brks
-brks[7] <- brks[7]+.000001 # the top value is getting cut off...
-spplot(fl, c('raw_Rate', 'eb_Rate'), col.regions = pal, at = brks)
+cities <- data.frame(
+  city = c("Key West", "Pensacola", "Jacksonville", "Tampa", "Miami"),
+  state = rep("Florida", 5),
+  country = rep("U.S.A.", 5)) %>% 
+  mutate(name = paste(city, state, country, sep = ", "))
+# xy <- geocode(cities$name, output = c("latlon"), source = "google")
+# write_rds(xy, "data/urban-lat-lons.rds")
+xy <- read_rds("data/urban-lat-lons.rds")
+cities <- SpatialPointsDataFrame(xy, data = cities[ ,-4])
+
+capitol <- data.frame(
+  city = "Tallahassee", state = "Florida", country = "U.S.A."
+) %>% mutate(name = paste(city, state, country, sep = ", "))
+# xy <- geocode(capitol$name, output = c("latlon"), source = "google")
+# write_rds(xy, "data/tallahassee-lat-lon.rds")
+xy <- readRDS("data/tallahassee-lat-lon.rds")
+capitol <- SpatialPointsDataFrame(xy, data = capitol[ , -4])
+
+# merge data with shape and create plantation belt shapefile ====
+
+fl <- merge(fl, sRates, by = "name")
+plantation_belt <- fl[which(fl$plantation_belt == 1), ]
+plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$plantation_belt)
+
+# map the plantation belt and largest cities ====
+
+# breaksAg = c(0, 15, 30, 45, 60)
+palAg <- c('#ffffcc','#c2e699','#78c679','#238443')
+plantation_map <- tm_shape(fl) +
+  tm_fill("pct_agricultural",
+          title = "Percent of Land\nArea in Agriculture,\n1910",
+          style = "cont", 
+          palette = palAg) +
+  tm_borders(col="gray35") +
+  tm_legend(legend.hist.bg.color = "azure", 
+            legend.position = c("left", "bottom"),
+            legend.text.size = .8,
+            legend.title.size = 1.05) +
+  tm_layout(bg.color = "lightblue",
+            frame.double.line = F,
+            legend.format = list(digits = 0)) +
+  tm_shape(bg) +
+  tm_fill(col = "azure") +
+  tm_borders(col="gray35") +
+  tm_shape(plantation_belt) +
+  tm_borders(col = "gray20",
+             lwd = 2.5) +
+  tm_compass(position = c("center", "bottom"),
+             size = 1,
+             fontsize = .75) +
+  tm_shape(cities) + 
+  tm_dots(legend.show = F, 
+          xmod = .3,
+          shape = 21,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) +
+  tm_shape(capitol) + 
+  tm_dots(legend.show = F, 
+          xmod = -.25,
+          shape = 18,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) 
+
+save_tmap(tm = plantation_map, 
+          filename = "figures/plantation-belt-map.png",
+          units = "in", width = 6)
 
 # map sentencing rates ====
 
 # map local EB rates
-  # brks <- classIntervals(fl$eb_Rate, n = 6, style = 'jenks')$brks
+ # brks <- classIntervals(fl$eb_Rate, n = 6, style = 'jenks')$brks
   # pal <- brewer.pal(n = 6, name = "Reds")
 ebrate_map <- tm_shape(fl) + 
   tm_fill("eb_Rate",
@@ -164,8 +230,6 @@ save_tmap(tm = ebrate_map,
 
 # map standardized rates
 fl$SIR_zero_cntr <- fl$SIR - 1
-  # brks <- c(-10, -6, -2, 0, 2, 6, 10, 20, 34)
-  # pal <- rev( brewer.pal(n = 7, name = "RdBu") )
 standardized_map <- tm_shape(fl) + 
   tm_fill("SIR_zero_cntr",
           title = "Standardized State\nPrison Sentencing\nRates, 1905-1919",
