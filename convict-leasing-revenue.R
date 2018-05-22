@@ -2,8 +2,8 @@
 
 # Revenue derived from the FL state prison system, 1873-1914.
 # Data gathered from biennial reports of the Florida commissioner of agriculture.
-# Most years are reported in 13th Biennial Report for years 1913-1914 and 
-# the 16 Biennial report with data for years 1917-1920. Also see the annual
+# Most years are reported in 13th Biennial Report for years 1913-1914 (pp. 23-4) and 
+# the 16 Biennial report with data for years 1917-1920 (pp. 25-7). Also see the annual
 # reports of the Florida Adjutent General for missing values for 1886-1890.
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -1,20 +1,18 @@
 
 
-
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Compare age distribution of deaths among prisoners (1905-1909) to 
-  # that of whites and blacks in the Florida general population (1905) 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# that of whites and blacks in the Florida general population (1905) 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  # The mortality rate among prisoners (2.2% after 1901) was consistently over three times greater than the mortality rate of the
-  # Florida general population as meausred in 1905 (0.66%). 
-  # The figures generated here illustrate why the disparity was far worse still.
-  # median age of prisoners who died in custody was just 28.
+# The mortality rate among prisoners (2.2% after 1901) was consistently over three times greater than the mortality rate of the
+# Florida general population as meausred in 1905 (0.66%). 
 
 # Sources: General population deaths: The Ninth Biennial Report of the Commissioner of Agriculture - 
-  # State of Florida for the Period Beginning January 1, 1905, and Ending December 31, 1906.
-  # The age of prisoners who died in custody was recorded in the Biennial Reports for the years
-  # 1905 through 1909.
+# State of Florida for the Period Beginning January 1, 1905, and Ending December 31, 1906.
 
+# The age of prisoners who died in custody was recorded in the Biennial Reports for the years
+# 1905 through 1909.
 
 # mortality by age ====
 
@@ -107,6 +105,8 @@ mortality_rate <- penal_data %>%
   theme(plot.title = element_text(size = 11.5),
         plot.caption = element_text(size =8,
                                     hjust=0.5))
+
+# save figure ====
 
 g <- arrangeGrob(deaths, mortality_rate, ncol = 2)
 ggsave("figures/prison-mortality-rates.png", g,
