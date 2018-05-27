@@ -15,7 +15,7 @@ revenue <- read_csv("data/convict-leasing-revenue.csv")
 # this is just to draw a continuous line over missing values.
 revenue$rev_line <- zoo::na.approx(revenue$revenue, x = revenue$year)
 
-ggplot(revenue, aes(x=year, y=revenue)) + 
+rev_plot <- ggplot(revenue, aes(x=year, y=revenue)) + 
   geom_point(aes(year, revenue), 
              size = 1.75, col = 'black') +
   geom_line(aes(year, rev_line),
@@ -25,7 +25,7 @@ ggplot(revenue, aes(x=year, y=revenue)) +
   scale_y_continuous(name=NULL, 
                      breaks=seq(0, 350000, 50000),
                      labels = scales::dollar) +
-  ggtitle("State convict leasing revenue, 1877-1919") +
+  ggtitle("State Convict Leasing Revenue") +
   theme_bw() + 
   theme(plot.title = element_text(size=11.5),
         panel.grid.minor.x=element_blank(),
@@ -33,5 +33,6 @@ ggplot(revenue, aes(x=year, y=revenue)) +
         panel.grid.major.y = element_line(size = .5)) +
   geom_hline(yintercept = 0) 
 
-ggsave("figures/convict-leasing-revenue.png", 
-       width = 7.5, height = 6) 
+ggsave("figures/figure7-revenue.png", 
+       rev_plot,
+       width = 7.5, height = 6, dpi = 650) 

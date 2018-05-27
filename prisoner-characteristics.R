@@ -8,7 +8,7 @@ penal_data <- read_csv("data/prisoner_char.csv")
 #
 # state prison sentences by race and gender, 1883-1925 ====
 
-penal_data %>%
+sentencing_plot <- penal_data %>%
   gather(key = rage, value = prisoners, -year) %>%
   mutate(rage = 
           factor(rage, ordered = TRUE, 
@@ -28,7 +28,7 @@ penal_data %>%
                      breaks = c("black_male", "white_male", "black_female", "white_female"),
                      labels = c("Black male", "White male", "Black female", "White female"),
                      direction = -1) +
-  ggtitle("State prison sentences") +
+  ggtitle("State Prison Sentences") +
   theme_bw() +
   theme(axis.title = element_text(size=11),
         panel.grid.major.x = element_blank(), 
@@ -40,8 +40,9 @@ penal_data %>%
         legend.title = element_blank()) +
   coord_cartesian(ylim = c(0, 415)) 
 
-ggsave("figures/sentences.png", 
-       width = 7.5, height = 6)
+ggsave("figures/figure1-sentences-by-race-gender.png", 
+       sentencing_plot,
+       width = 7.5, height = 6, dpi = 650)
 
 
 
@@ -123,9 +124,10 @@ plot_rate <- penal_data %>%
     formula=y ~ splines::ns(x, 3)) +
   coord_cartesian(ylim = c(0, .5)) 
 
-g <- gridExtra::arrangeGrob(plot_raw, plot_rate, ncol = 2)
-ggsave("figures/pardons.png", g,
-       width = 10, height = 6)
+pardon_plots <- gridExtra::arrangeGrob(plot_raw, plot_rate, ncol = 2)
+ggsave("figures/pardons.png", 
+       pardon_plots,
+       width = 10, height = 6, dpi = 650)
 
 # sentences by prisoner place of origin ====
 
@@ -137,22 +139,25 @@ ggsave("figures/pardons.png", g,
   # using the actual count of sentences rather than the sum of prisoners by origin.
 origins <- dplyr::select(penal_data,
               year, florida, alabama, georgia, northcarolina, southcarolina,
-              other_south, other_regioncountry, not_given)
+              other_south, other_regioncountry, not_given) %>%
+  mutate(other = other_south + other_regioncountry) %>%
+  dplyr::select(-c(other_regioncountry, other_south))
 
-origins[, -1] <- purrr::map_df(origins[,-1], function(x){
-  x/penal_data$total_sentences
+year.col <- which(names(origins)=="year")
+total_sents <- rowSums(origins[, -year.col], na.rm=T)
+origins[, -year.col] <- purrr::map_df(origins[,-year.col], function(x){
+  x/total_sents
 } )
 
-origins %>%
+place_plot <- origins %>%
   tidyr::gather(key = origin, value = sentences, -year) %>%
   mutate(origin = factor(origin, ordered = TRUE,
                          levels = c("florida",
                                     "georgia",
-                                    "alabama",
-                                    "northcarolina",
                                     "southcarolina",
-                                    "other_south",
-                                    "other_regioncountry",
+                                    "northcarolina",
+                                    "alabama",
+                                    "other",
                                     "not_given"))) %>%
   ggplot() +
   geom_area(aes(year, sentences, fill = origin),
@@ -167,25 +172,25 @@ origins %>%
   guides(fill = guide_legend(reverse=TRUE)) +
   labs(x=NULL, 
        y = NULL, 
-       caption = "Data for 1899 exceeds 100% due to a discrepancy of 5 prisoners\nbetween places of origin and total sentences in the original record.",
-       title = "State prison sentences by prisoner's place of origin") +
-  theme(axis.ticks.y = element_blank(), axis.ticks.x=element_blank()) +
+       title = "State Prison Sentences by Prisoner's Place of Origin") +
+  theme(axis.ticks.y = element_blank(), 
+        axis.ticks.x=element_blank()) +
   theme_bw() +
   theme(panel.grid.major.x = element_blank(), 
         panel.grid.minor.x  = element_blank(),
         panel.grid.major.y = element_line( size=.1, color="grey" )) +
-  scale_fill_brewer(type = "qual",
-                    palette = "Dark2",
-                    name = NULL,
+  scale_fill_brewer(
                     labels=c("Florida", 
                              "Georgia", 
-                             "Alabama", 
-                             "North Carolina",
                              "South Carolina",
-                            "Other South",
-                            "Other region/county",
-                            "Unrecorded")) +
+                             "North Carolina",
+                             "Alabama", 
+                             "Other South",
+                             "Unrecorded"),
+                    palette = "Paired",
+                    name = NULL) +
   theme(plot.title = element_text(size=11.5))
 
-ggsave("figures/prisoner-origins.png", 
-       width = 7.5, height = 6)
+ggsave("figures/figure3-origins.png", 
+       place_plot,
+       width = 7.5, height = 6, dpi = 650)

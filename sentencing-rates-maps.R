@@ -104,17 +104,18 @@ SIR_plot <- ggplot(sRates) +
   coord_flip() +
   scale_x_discrete(name = NULL) +
   scale_y_continuous(breaks = seq(0, 4, .5),name = NULL) +
-  labs(title = "Standardized sentencing rates, 1905-1919",
+  labs(title = "Standardized Sentencing Rates",
        subtitle = "with 95% confidence intervals") +
   theme_bw() +
   theme(plot.title = element_text(size = 11),
         plot.subtitle = element_text(size = 9))
 
-ggsave("figures/sentencing-rates-standardized-plot.png", 
+ggsave("figures/figure6-SIR-plot.png", 
        SIR_plot,
        width = 6, 
        height = 8,
-       units = "in")
+       units = "in",
+       dpi = 650)
 
 # get lat-lon for Florida's largest cities plus Tallahassee ====
 
@@ -144,8 +145,8 @@ plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$pl
 
 # map the plantation belt and largest cities ====
 
-# breaksAg = c(0, 15, 30, 45, 60)
 palAg <- c('#ffffcc','#c2e699','#78c679','#238443')
+
 plantation_map <- tm_shape(fl) +
   tm_fill("pct_agricultural",
           title = "Percent of Land\nArea in Agriculture,\n1910",
@@ -190,17 +191,16 @@ plantation_map <- tm_shape(fl) +
           alpha = .9) 
 
 save_tmap(tm = plantation_map, 
-          filename = "figures/plantation-belt-map.png",
+          filename = "figures/plantation-belt.png",
           units = "in", width = 6)
 
 # map sentencing rates ====
 
 # map local EB rates
- # brks <- classIntervals(fl$eb_Rate, n = 6, style = 'jenks')$brks
-  # pal <- brewer.pal(n = 6, name = "Reds")
-ebrate_map <- tm_shape(fl) + 
-  tm_fill("eb_Rate",
-          title = "Mean State Prison\nSentencing Rates\nper 1,000 Residents,\n1905-1919",
+
+raw_rate_map <- tm_shape(fl) + 
+  tm_fill("raw_Rate",
+          title = "Mean Annual State\nPrison Sentences\nper 1,000 Residents,\n1905-1919",
           style = "cont",
           palette = "Reds",
           frame = F
@@ -222,10 +222,30 @@ ebrate_map <- tm_shape(fl) +
              lwd = 2.5) +
   tm_compass(position = c("center", "bottom"),
              size = 1,
-             fontsize = .75)
+             fontsize = .75) +
+  tm_shape(cities) + 
+  tm_dots(legend.show = F, 
+          xmod = .3,
+          shape = 21,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) +
+  tm_shape(capitol) + 
+  tm_dots(legend.show = F, 
+          xmod = -.25,
+          shape = 18,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) 
 
-save_tmap(tm = ebrate_map, 
-          filename = "figures/sentencing-rates-local-EB-map.png",
+save_tmap(tm = raw_rate_map, 
+          filename = "figures/raw-sentencing-rates-map.png",
           units = "in", width = 6)
 
 # map standardized rates
@@ -255,8 +275,41 @@ tm_shape(plantation_belt) +
              lwd = 2.5) +
   tm_compass(position = c("center", "bottom"),
              size = 1,
-             fontsize = .75)
+             fontsize = .75) +
+  tm_shape(cities) + 
+  tm_dots(legend.show = F, 
+          xmod = .3,
+          shape = 21,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) +
+  tm_shape(capitol) + 
+  tm_dots(legend.show = F, 
+          xmod = -.25,
+          shape = 18,
+          alpha = .75,
+          size = 0.35,
+          col = "black") +
+  tm_text("city", size = .8, 
+          auto.placement = T, 
+          alpha = .9) 
 
 save_tmap(tm = standardized_map, 
-          filename = "figures/sentencing-rates-standardized-map.png",
+          filename = "figures/figure5-SIR-map.png",
           units = "in", width = 6)
+
+
+# Figure 4: combine sentencing maps with magick ====
+
+library(magick)
+
+m1 <- image_read("figures/raw-sentencing-rates-map.png")
+m2 <- image_read("figures/plantation-belt.png")
+m <- c(m2, m1)
+m <- image_append(m)
+image_write(m, 
+            path = "figures/figure4-plantations-sentences.png", 
+            format = "png")
