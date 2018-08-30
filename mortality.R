@@ -53,8 +53,6 @@ prison.deaths$class <- cut(prison.deaths$Age,
                            breaks = c(0, population.deaths$upr),
                            ordered.result= T)
 
-# figures
-
 
 white <- ggplot(population.deaths) +
   geom_col(aes(x=class, y=wcount), width = .975) +
@@ -101,11 +99,11 @@ deaths <- ggplot(penal_data, aes(x = year, y = deaths)) +
                      lim = c(1870, 1925)) +
   scale_y_continuous(breaks = seq(0, 80, 5),
                      name = NULL) +
-  ggtitle("Deaths") +
+  ggtitle("State Prison Deaths") +
   theme_bw() + 
   theme(panel.grid.minor.x=element_blank(),
         panel.grid.major.x=element_blank()) +
-  theme(plot.title = element_text(size = 11.5),
+  theme(plot.title = element_text(size = 12),
         plot.caption = element_text(size =8,
                                     hjust=0.5))
 
@@ -126,11 +124,11 @@ mortality_rate <- penal_data %>%
                      name = NULL,
                      lim = c(0, .2)) +
   geom_point(col = 'black') +  
-  ggtitle("Mortality rate") +
+  ggtitle("State Prison Mortality rate") +
   theme_bw() +
   theme(panel.grid.minor.x=element_blank(),
         panel.grid.major.x=element_blank()) +
-  theme(plot.title = element_text(size = 11.5),
+  theme(plot.title = element_text(size = 12),
         plot.caption = element_text(size =8,
                                     hjust=0.5))
 
@@ -138,8 +136,11 @@ mortality_rate <- penal_data %>%
 
 mortality_fig <- arrangeGrob(deaths, mortality_rate, ncol = 2)
 
-ggsave("figures/figure2-annual-mortality.png", mortality_fig,
-       width = 11, height = 6, dpi = 650)
+ggsave("figures/figure2-annual-mortality.png", 
+       mortality_fig,
+       width = 11,
+       height = 6, 
+       dpi = 650)
 
 
 

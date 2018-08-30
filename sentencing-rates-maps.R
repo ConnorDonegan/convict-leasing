@@ -11,8 +11,9 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # load packages ====
-pkgs <- c("tidyverse", "classInt", "RColorBrewer", "ggmap", "GISTools", "maptools", "sf", 
-          "ggmap", "tmap", "USAboundaries", "spdep", "sp", "raster", "scales", "pracma")
+pkgs <- c("tidyverse", "classInt", "RColorBrewer", "GISTools", "maptools", "sf", 
+          "ggmap", "tmap", "USAboundaries", "spdep", "sp", "raster", "scales", "pracma",
+          "magick")
 lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
 # load data and calculate mean (state wide) sentencing rates by race during the convict leasing program ====
@@ -45,17 +46,19 @@ fl <- as(fl, "Spatial")
 FLaea <- "+proj=aea +lat_1=24 +lat_2=31.5 +lat_0=24 +lon_0=-84 +x_0=400000 +y_0=0 +ellps=GRS80 +units=m +no_defs" 
 fl <- spTransform(fl, CRS(FLaea))
 
-  # neighbors list for local empirical bayes estimates
+# neighbors list for local empirical bayes estimates ====
+
 neighbs <- poly2nb(fl)
 
-  # neighboring states for map background
+# neighboring states for map background ====
+
 bg <- us_counties(map_date="1920-01-01", resolution="high", 
-                  states=c("Alabama", "Georgia", "Louisiana"))
+                  states=c("Alabama", "Georgia", "Mississippi", "Louisiana"))
 bg <- as(bg, "Spatial")
 bg <- unionSpatialPolygons(bg, bg$state_terr)
 bg <- spTransform(bg, CRS(FLaea))
 
-# calculate county sentencing rates and SIR ====
+# calculate county sentencing rates and SIRs ====
 
 sRates <- dcounty %>%
   mutate(name = toupper(county),
@@ -63,8 +66,6 @@ sRates <- dcounty %>%
   filter(year > 1904 & year < 1920) %>% 
   group_by(name) %>%
   dplyr::summarize(sents = sum(sentences, na.rm=T),
-                   sents_lwr = qpois(.05, sents),
-                   sents_upr = qpois(.95, sents),
                    pop = sum(population, na.rm=T),
                    wpop = sum(population_white, na.rm = T),
                    bpop = sum(population_black, na.rm = T),
@@ -77,11 +78,10 @@ sRates <- dcounty %>%
     # raw sentencing rates
     raw_Rate = sents / pop,
     # local empirical bayes estimates
-    eb_Rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est,
-    # SIR
-    SIR = sents / expected_sents,
-    SIR_lwr = sents_lwr / expected_sents, 
-    SIR_upr = sents_upr / expected_sents) %>%
+    eb_Rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est) %>%
+  # use eb rates to construct the SIRs
+  mutate(eb_sents = eb_Rate*pop) %>%
+  mutate(SIR = eb_sents / expected_sents) %>%
   mutate(raw_Rate = 1000 * raw_Rate,
          eb_Rate = 1000 * eb_Rate)
 
@@ -90,32 +90,6 @@ sRates <- dcounty %>%
 plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = "County Sentencing Rates")
 lines(density(sRates$raw_Rate), lwd = 2, col = 'blue')
 legend(x=0, y = 2.5, legend = c("Raw rate", "EB rate"), fill = c("blue", "red"))
-
-# plot standardized incidence rates ====
-
-sRates <-  arrange(sRates, SIR)
-sRates$name <- factor(sRates$name, ordered=T, levels = sRates$name)
-SIR_plot <- ggplot(sRates) +
-  geom_point(aes(x=name, y = SIR)) +
-  geom_errorbar(aes(x=name, ymin = SIR_lwr, ymax = SIR_upr),
-                width = 0,
-                size = .25) +
-  geom_hline(yintercept = 1) +
-  coord_flip() +
-  scale_x_discrete(name = NULL) +
-  scale_y_continuous(breaks = seq(0, 4, .5),name = NULL) +
-  labs(title = "Standardized Sentencing Rates",
-       subtitle = "with 95% confidence intervals") +
-  theme_bw() +
-  theme(plot.title = element_text(size = 11),
-        plot.subtitle = element_text(size = 9))
-
-ggsave("figures/figure6-SIR-plot.png", 
-       SIR_plot,
-       width = 6, 
-       height = 8,
-       units = "in",
-       dpi = 650)
 
 # get lat-lon for Florida's largest cities plus Tallahassee ====
 
@@ -137,85 +111,95 @@ capitol <- data.frame(
 xy <- readRDS("data/tallahassee-lat-lon.rds")
 capitol <- SpatialPointsDataFrame(xy, data = capitol[ , -4])
 
-# merge data with shape and create plantation belt shapefile ====
+# merge data with shapefile and create plantation belt shapefile ====
 
 fl <- merge(fl, sRates, by = "name")
 plantation_belt <- fl[which(fl$plantation_belt == 1), ]
 plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$plantation_belt)
 
-# map the plantation belt and largest cities ====
+# set color (gray scale) parameters ==== 
 
-palAg <- c('#ffffcc','#c2e699','#78c679','#238443')
+bg.color = "gray95"
+pal = "Greys"
+neighbors.col = "gray80"
+belt.col = "gray10"
+leg.title.size = 1.2
+
+# map the plantation belt and largest cities ====
 
 plantation_map <- tm_shape(fl) +
   tm_fill("pct_agricultural",
           title = "Percent of Land\nArea in Agriculture,\n1910",
           style = "cont", 
-          palette = palAg) +
+          legend.reverse = TRUE,
+          palette = pal) +
   tm_borders(col="gray35") +
-  tm_legend(legend.hist.bg.color = "azure", 
-            legend.position = c("left", "bottom"),
-            legend.text.size = .8,
-            legend.title.size = 1.05) +
-  tm_layout(bg.color = "lightblue",
+  tm_legend(
+    legend.position = c("left", "bottom"),
+    legend.text.size = .8,
+    legend.title.size = leg.title.size) +
+  tm_layout(bg.color = bg.color,
             frame.double.line = F,
             legend.format = list(digits = 0)) +
   tm_shape(bg) +
-  tm_fill(col = "azure") +
+  tm_fill(col = neighbors.col) +
   tm_borders(col="gray35") +
   tm_shape(plantation_belt) +
-  tm_borders(col = "gray20",
+  tm_borders(col = belt.col,
              lwd = 2.5) +
   tm_compass(position = c("center", "bottom"),
              size = 1,
              fontsize = .75) +
   tm_shape(cities) + 
   tm_dots(legend.show = F, 
-          xmod = .3,
           shape = 21,
           alpha = .75,
           size = 0.35,
           col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+  tm_text("city", 
+          size = .8, 
+          xmod = -.5,
+          ymod = .6,
           alpha = .9) +
   tm_shape(capitol) + 
   tm_dots(legend.show = F, 
-          xmod = -.25,
-          shape = 18,
-          alpha = .75,
+          shape = 23,
+          alpha = 1,
           size = 0.35,
-          col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+          col = "gray",
+  ) +
+  tm_text("city", 
+          size = .8, 
+          ymod = -.25,
+          bg.color = "snow2",
+          bg.alpha = .25,
           alpha = .9) 
 
-save_tmap(tm = plantation_map, 
+tmap_save(tm = plantation_map,
           filename = "figures/plantation-belt.png",
-          units = "in", width = 6)
+          units = "in", width = 6.75)
 
-# map sentencing rates ====
+# map empirical base estimates of sentencing rates ====
 
-# map local EB rates
-
-raw_rate_map <- tm_shape(fl) + 
-  tm_fill("raw_Rate",
-          title = "Mean Annual State\nPrison Sentences\nper 1,000 Residents,\n1905-1919",
+eb_map <- tm_shape(fl) + 
+  tm_fill("eb_Rate",
+          title = "Mean State Prison\nSentencing Rates\nper 1,000 Residents,\n1905-1919",
           style = "cont",
-          palette = "Reds",
-          frame = F
+          palette = pal,
+          frame = F,
+          legend.reverse = TRUE
   ) +
   tm_borders(col="gray35") +
-  tm_legend(legend.hist.bg.color = "azure", 
+  tm_legend(legend.hist.bg.color = bg.color, 
             legend.position = c("left", "bottom"),
             legend.text.size = .8,
-            legend.title.size = 1.05) +
-  tm_layout(bg.color = "lightblue",
+            legend.title.size = leg.title.size) +
+  tm_layout(bg.color = bg.color,
             legend.hist.height=.25,
             frame.double.line = F,
             legend.format = list(digits = 1)) +
   tm_shape(bg) +
-  tm_fill(col = "azure") +
+  tm_fill(col = neighbors.col) +
   tm_borders(col="gray35") +
   tm_shape(plantation_belt) +
   tm_borders(col = "gray20",
@@ -225,52 +209,56 @@ raw_rate_map <- tm_shape(fl) +
              fontsize = .75) +
   tm_shape(cities) + 
   tm_dots(legend.show = F, 
-          xmod = .3,
           shape = 21,
           alpha = .75,
           size = 0.35,
           col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+  tm_text("city", 
+          size = .8, 
+          xmod = -.5,
+          ymod = .6,
           alpha = .9) +
   tm_shape(capitol) + 
   tm_dots(legend.show = F, 
-          xmod = -.25,
-          shape = 18,
-          alpha = .75,
+          shape = 23,
+          alpha = 1,
           size = 0.35,
-          col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+          col = "black"
+  ) +
+  tm_text("city", 
+          size = .8, 
+          ymod = -.25,
+          bg.alpha = .25,
           alpha = .9) 
 
-save_tmap(tm = raw_rate_map, 
-          filename = "figures/raw-sentencing-rates-map.png",
-          units = "in", width = 6)
+tmap_save(tm = eb_map,
+          filename = "figures/eb-map.png",
+          units = "in", width = 6.75)
 
-# map standardized rates
-fl$SIR_zero_cntr <- fl$SIR - 1
-standardized_map <- tm_shape(fl) + 
-  tm_fill("SIR_zero_cntr",
+# map SIRs ====
+
+sir_map <- tm_shape(fl) +
+  tm_fill("SIR",
           title = "Standardized State\nPrison Sentencing\nRates, 1905-1919",
           style = "cont",
-          palette = "-RdBu",
+          palette = pal,
+          legend.reverse = TRUE,
           frame = F,
           labels = c("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
-          ) +
+  ) +
   tm_borders(col="gray35") +
-  tm_legend(legend.hist.bg.color = "azure", 
+  tm_legend(legend.hist.bg.color = bg.color, 
             legend.position = c("left", "bottom"),
             legend.text.size = .8,
-            legend.title.size = 1.05) +
-  tm_layout(bg.color = "lightblue",
+            legend.title.size = 1.2) +
+  tm_layout(bg.color = bg.color,
             legend.hist.height=.25,
             frame.double.line = F,
             legend.format = list(digits = 1)) +
   tm_shape(bg) +
-  tm_fill(col = "azure") +
+  tm_fill(col = neighbors.col) +
   tm_borders(col="gray35") +
-tm_shape(plantation_belt) +
+  tm_shape(plantation_belt) +
   tm_borders(col = "gray20",
              lwd = 2.5) +
   tm_compass(position = c("center", "bottom"),
@@ -278,38 +266,47 @@ tm_shape(plantation_belt) +
              fontsize = .75) +
   tm_shape(cities) + 
   tm_dots(legend.show = F, 
-          xmod = .3,
           shape = 21,
           alpha = .75,
           size = 0.35,
           col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+  tm_text("city", 
+          size = .8, 
+          xmod = -.5,
+          ymod = .6,
           alpha = .9) +
   tm_shape(capitol) + 
   tm_dots(legend.show = F, 
-          xmod = -.25,
-          shape = 18,
-          alpha = .75,
+          # xmod = -.25,
+          shape = 23,
+          alpha = 1,
           size = 0.35,
-          col = "black") +
-  tm_text("city", size = .8, 
-          auto.placement = T, 
+          col = "black"
+  ) +
+  tm_text("city", 
+          size = .8, 
+          ymod = -.25,
+          bg.alpha = .25,
           alpha = .9) 
 
-save_tmap(tm = standardized_map, 
-          filename = "figures/figure5-SIR-map.png",
-          units = "in", width = 6)
-
+tmap_save(tm = sir_map,
+          filename = "figures/sir-map.png",
+          units = "in", width = 6.75)
 
 # Figure 4: combine sentencing maps with magick ====
 
-library(magick)
+m1 <- image_read("figures/plantation-belt.png")
+m2 <- image_read("figures/eb-map.png")
+m3 <- image_read("figures/sir-map.png")
 
-m1 <- image_read("figures/raw-sentencing-rates-map.png")
-m2 <- image_read("figures/plantation-belt.png")
-m <- c(m2, m1)
+m <- c(m1, m2, m3)
 m <- image_append(m)
+
 image_write(m, 
             path = "figures/figure4-plantations-sentences.png", 
             format = "png")
+
+file.remove(c("figures/plantation-belt.png",
+              "figures/eb-map.png",
+              "figures/sir-map.png"))
+
