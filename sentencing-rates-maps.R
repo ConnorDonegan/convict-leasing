@@ -179,7 +179,7 @@ tmap_save(tm = plantation_map,
           filename = "figures/plantation-belt.png",
           units = "in", width = 6.75)
 
-# map empirical base estimates of sentencing rates ====
+# map empirical bayes estimates of sentencing rates ====
 
 eb_map <- tm_shape(fl) + 
   tm_fill("eb_Rate",
@@ -239,7 +239,7 @@ tmap_save(tm = eb_map,
 
 sir_map <- tm_shape(fl) +
   tm_fill("SIR",
-          title = "Standardized State\nPrison Sentencing\nRates, 1905-1919",
+          title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
           style = "cont",
           palette = pal,
           legend.reverse = TRUE,

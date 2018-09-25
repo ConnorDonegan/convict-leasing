@@ -23,6 +23,7 @@ sentencing_plot <- penal_data %>%
           levels = c("black_male", "white_male", "black_female", "white_female"))
          ) %>%
   filter(year > 1882 & year < 1925) %>%
+  na.omit() %>%
  ggplot( aes(year, prisoners, group = rage)) +
   geom_line( aes(year, prisoners, colour=rage), 
             lwd = .5,
