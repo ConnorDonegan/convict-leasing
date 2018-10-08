@@ -1,7 +1,7 @@
 
 
 # Floria Convict Leasing Data
-# Interpolate county population between census years, merge with county sentencing data
+# Interpolate county population between census years and join to county sentencing data
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # Sources.
@@ -150,6 +150,7 @@ sentences <- sentences %>%
   as.tibble()
 
 # save ====
+
 write_csv(sentences, "data/sentencing.csv")
 
 

@@ -50,14 +50,6 @@ fl <- spTransform(fl, CRS(FLaea))
 
 neighbs <- poly2nb(fl)
 
-# neighboring states for map background ====
-
-bg <- us_counties(map_date="1920-01-01", resolution="high", 
-                  states=c("Alabama", "Georgia", "Mississippi", "Louisiana"))
-bg <- as(bg, "Spatial")
-bg <- unionSpatialPolygons(bg, bg$state_terr)
-bg <- spTransform(bg, CRS(FLaea))
-
 # calculate county sentencing rates and SIRs ====
 
 sRates <- dcounty %>%
@@ -90,6 +82,14 @@ sRates <- dcounty %>%
 plot(density(sRates$eb_Rate), lwd = 2, col = 'red', main = "County Sentencing Rates")
 lines(density(sRates$raw_Rate), lwd = 2, col = 'blue')
 legend(x=0, y = 2.5, legend = c("Raw rate", "EB rate"), fill = c("blue", "red"))
+
+# neighboring states for map background ====
+
+bg <- us_counties(map_date="1920-01-01", resolution="high", 
+                  states=c("Alabama", "Georgia", "Mississippi", "Louisiana"))
+bg <- as(bg, "Spatial")
+bg <- unionSpatialPolygons(bg, bg$state_terr)
+bg <- spTransform(bg, CRS(FLaea))
 
 # get lat-lon for Florida's largest cities plus Tallahassee ====
 
