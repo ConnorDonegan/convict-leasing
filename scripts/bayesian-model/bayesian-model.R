@@ -2,22 +2,19 @@
 library(tidyverse)
 source("bayes-data-prep.R")
 
-# mixture <- mixture(poisson(), poisson())
+form <- bf(sents ~ 1 + (1|name) + offset(log_expectation))
 
-form <- bf(sents ~ 1 + plantation_belt + (1|name) + offset(log_expectation))
-
-get_prior(form,
-          data=sents,
-          family = poisson(),
-          autocor = cor_car(W, ~ 1 | name))
+# get_prior(form,
+#           data=sents,
+#           family = poisson(),
+#           autocor = cor_car(W, ~ 1 | name))
 
 car_prior <- c(
              prior(uniform(0, 1), class = car),
-             prior(normal(.5, .2), class = sdcar),
-             prior()
+             prior(normal(.5, .2), class = sdcar)
                      )
 
-m1 <- brm(form,
+mod <- brm(form,
            autocor = cor_car(W, ~1|name),
            data = sents, 
            prior = car_prior,
@@ -27,13 +24,12 @@ m1 <- brm(form,
                           adapt_delta = .99),
            family = poisson())
 
-## Does the plantation_belt intercept improve the model?
-m2 <- update(m1, formula. = ~. - plantation_belt)
-waic(m1, m2)
-mod <- m2
+ # check the fit
+pp_check(mod)
 
 save(mod, file = "scripts/bayesian-model/bayes-fit.Rdata")
 
+ # plot the sentencing ratios with credible intervals
 d <- cbind(mod$data, predict(mod, probs = c(.05, .95))) %>%
   inner_join(dplyr::select(sents, name, plantation_belt, expected_sents, pop),
              by = "name") %>%
