@@ -53,6 +53,8 @@ sents <- dcounty %>%
   ungroup() 
 
 # ensure row index of sents data conforms to spatial weights matrix #
+neighbs <- poly2nb(fl)
+W <- nb2mat(neighbs, style = "B")
 
 fl@data <- inner_join(fl@data, sents, by = "name")
 
@@ -66,8 +68,6 @@ sents <- fl@data %>%
          log_expectation = log(expected_sents),
          pop = round(pop))
 
-neighbs <- poly2nb(fl)
-W <- nb2mat(neighbs, style = "B")
 row.names(W) <- fl$name 
 
 

@@ -1,6 +1,7 @@
 
 library(tidyverse)
-source("bayes-data-prep.R")
+library(brms)
+source("scripts/bayesian-model/bayes-data-prep.R")
 
 form <- bf(sents ~ 1 + (1|name) + offset(log_expectation))
 
@@ -60,6 +61,7 @@ confidence_plot <- d %>%
   theme(plot.title = element_text(size = 11),
         legend.title = element_text(size = 9),
         legend.position = c(.8, .33))
+
 ggsave(confidence_plot,
        file = "figures/confidence-plot.png",
         dpi = 600,
