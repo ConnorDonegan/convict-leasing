@@ -3,7 +3,11 @@ library(tidyverse)
 library(brms)
 source("scripts/bayesian-model/bayes-data-prep.R")
 
-form <- bf(sents ~ 1 + (1|name) + offset(log_expectation))
+  # model standard deviation of the intercepts
+form1 <- bf(sents ~ 1 + (1 | name) + offset(log_expectation))
+
+  # same but sd is distinct within and outside of the plantation belt
+form2 <- bf(sents ~ 1 + (1 | gr(name, by = plantation_belt)) + offset(log_expectation))
 
 # get_prior(form,
 #           data=sents,
@@ -39,6 +43,12 @@ d <- cbind(mod$data, predict(mod, probs = c(.05, .95))) %>%
          sratio = Estimate/expected_sents,
          lwr = Q5/expected_sents,
          upr = Q95/expected_sents)
+
+ # table of observed sentences, estimates, SIRS and 95% credible intervals
+d %>%
+  # filter(name %in% cnties) %>%
+  dplyr::select(name, Estimate, sents, srate, rawratio, sratio, lwr, upr) %>%
+  mutate(srate = srate*1e3)
 
 confidence_plot <- d %>%
   arrange(sratio) %>%
