@@ -66,12 +66,13 @@ sents <- fl@data %>%
          raw_ratio = sents / expected_sents) %>%
   mutate(plantation_belt = factor(plantation_belt),
          log_expectation = log(expected_sents),
-         pop = round(pop))
+         pop = round(pop),
+         name = factor(name))
 
 row.names(W) <- fl$name 
 
-
-
+save(sents, file = "data/sents-model-data.Rdata")
+save(W, file = "data/spatial-weights-matrix.Rdata")
 
 
 
