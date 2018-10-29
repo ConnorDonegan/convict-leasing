@@ -3,7 +3,7 @@
 
 # load packages ====
 
-pkgs <- c("tidyverse", "classInt", "RColorBrewer", "GISTools", "maptools", "sf", 
+pkgs <- c("tidyverse", "classInt", "RColorBrewer", "GISTools", "maptools", "sf", "magick",
           "ggmap", "tmap", "USAboundaries", "spdep", "sp", "raster", "scales")
 lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
@@ -38,9 +38,8 @@ fl <- merge(fl, dd, by = "name")
 
 # plantation belt boundaries ==== 
 
-# fl <- merge(fl, dd, by = "name")
-# plantation_belt <- fl[which(fl$Plantation_Belt == 1), ]
-# plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$Plantation_Belt)
+plantation_belt <- fl[which(fl$Plantation_Belt == 1), ]
+plantation_belt <- unionSpatialPolygons(plantation_belt, plantation_belt@data$Plantation_Belt)
 
 # neighboring states for map background ====
 
@@ -74,16 +73,20 @@ capitol <- SpatialPointsDataFrame(xy, data = capitol[ , -4])
 
 bg.color = "gray95"
 pal = "Greys"
-neighbors.col = "gray80"
+neighbors.col = "gray90"
 belt.col = "gray10"
 leg.title.size = 1.2
+cities_xmod = c(0, 0, .5, -.1, -.25)
+cities_ymod = .5
 
 # map the plantation belt and largest cities 
+brks <- classIntervals(fl@data$pct_ag, n = 5, style = "jenks")$brks
 
 plantation_map <- tm_shape(fl) +
   tm_fill("pct_ag",
           title = "Percent of Land\nArea in Agriculture,\n1910",
-          style = "cont", 
+          # style =  "cont",
+          breaks = brks,
           legend.reverse = TRUE,
           palette = pal) +
   tm_borders(col="gray35") +
@@ -99,10 +102,10 @@ plantation_map <- tm_shape(fl) +
 plantation_map <- plantation_map +  
   tm_shape(bg) +
   tm_fill(col = neighbors.col) +
-  tm_borders(col="gray35") 
-  # tm_shape(plantation_belt) +
-  # tm_borders(col = belt.col, lty = 2,
-  #            lwd = 2.5) +
+  tm_borders(col="gray35") +
+  tm_shape(plantation_belt) +
+  tm_borders(col = belt.col, lty = 1,
+             lwd = 2)
   
  # add the cities
 plantation_map <- plantation_map +
@@ -110,12 +113,13 @@ plantation_map <- plantation_map +
   tm_dots(legend.show = F, 
           shape = 21,
           alpha = .75,
-          size = 0.35,
+          size = 0.3,
           col = "black") +
   tm_text("city", 
           size = .8, 
-          xmod = -.5,
-          ymod = .6,
+          # xmod = -.5,
+          xmod = cities_xmod,
+          ymod = cities_ymod,
           alpha = .9) +
   tm_shape(capitol) + 
   tm_dots(legend.show = F, 
@@ -126,7 +130,7 @@ plantation_map <- plantation_map +
   ) +
   tm_text("city", 
           size = .8, 
-          ymod = -.25,
+          ymod = cities_ymod,
           bg.color = "snow2",
           bg.alpha = .25,
           alpha = .9) 
@@ -137,15 +141,22 @@ plantation_map <- plantation_map +
             size = 1,
             fontsize = .75) 
 
+tmap_save(tm = plantation_map,
+          filename = "figures/plantation-map.png",
+          units = "in", width = 6.75)
+
  # map SIRs
+brks <- c(0, .5, 1, 1.5,  2, 2.5, 3)
+
 sir_map <- tm_shape(fl) +
   tm_fill("Model_SIR",
           title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
-          style = "cont",
+          # style = "cont",
+          breaks = brks,
           palette = pal,
           legend.reverse = TRUE,
-          frame = F,
-          labels = c("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
+          frame = F#,
+          # labels = c("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
   ) +
   tm_borders(col="gray35") +
   tm_legend(legend.hist.bg.color = bg.color, 
@@ -162,9 +173,9 @@ sir_map <- sir_map +
   tm_shape(bg) +
   tm_fill(col = neighbors.col) +
   tm_borders(col="gray35") +
-  # tm_shape(plantation_belt) +
-  # tm_borders(col = "gray20",
-  #            lwd = 2.5) +
+  tm_shape(plantation_belt) +
+  tm_borders(col = belt.col,
+             lwd = 2) 
 
  # add cities
 sir_map <- sir_map + 
@@ -176,12 +187,11 @@ sir_map <- sir_map +
           col = "black") +
   tm_text("city", 
           size = .8, 
-          xmod = -.5,
+          xmod = cities_xmod,
           ymod = .6,
           alpha = .9) +
   tm_shape(capitol) + 
   tm_dots(legend.show = F, 
-          # xmod = -.25,
           shape = 23,
           alpha = 1,
           size = 0.35,
@@ -189,8 +199,8 @@ sir_map <- sir_map +
   ) +
   tm_text("city", 
           size = .8, 
-          ymod = -.25,
-          bg.alpha = .25,
+          ymod = cities_ymod,
+          bg.alpha = .35,
           alpha = .9) 
 
  # add a compass
@@ -199,6 +209,25 @@ sir_map <- sir_map +
              size = 1,
              fontsize = .75) 
 
+tmap_save(tm = sir_map,
+          filename = "figures/sir-map.png",
+          units = "in", width = 6.75)
+
+# Figure 4: combine sentencing maps with magick ====
+
+m1 <- image_read("figures/plantation-map.png")
+m2 <- image_read("figures/sir-map.png")
+
+m <- c(m1, m2)
+m <- image_append(m)
+
+image_write(m, 
+            path = "figures/figure4-plantations-sentences.png", 
+            format = "png")
+
+file.remove(c("figures/plantation-belt.png",
+              "figures/eb-map.png",
+              "figures/sir-map.png"))
 
 
 
