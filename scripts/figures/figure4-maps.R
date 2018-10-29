@@ -225,8 +225,7 @@ image_write(m,
             path = "figures/figure4-plantations-sentences.png", 
             format = "png")
 
-file.remove(c("figures/plantation-belt.png",
-              "figures/eb-map.png",
+file.remove(c("figures/plantation-map.png",
               "figures/sir-map.png"))
 
 
