@@ -17,8 +17,8 @@ Rscript scripts/bayesian-model/bayesian-model.R
 # Rscript scripts/bayesian-model/bayes-model-compare.R
 
 # compare estimates and raw values by table of results and plot of all estimates
-Rscript scripts/figures/bayes-table-of-results.R
+Rscript scripts/figures/appendix-table-of-results.R
 Rscript scripts/figures/bayes-plot-estimates.R
 
 # make maps of plantation belt and standardized sentencing ratios
-Rscript scripts/figures/make-maps.R
+Rscript scripts/figures/figure4-maps.R
