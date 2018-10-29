@@ -43,5 +43,5 @@ sentencing_plot <- penal_data %>%
 ggsave("figures/figure1-sentences-by-race-gender.png", 
        sentencing_plot,
        width = 7.5, 
-       height = 6, 
+       height = 5.66, 
        dpi = 650)
