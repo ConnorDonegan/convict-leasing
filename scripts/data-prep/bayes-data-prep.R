@@ -1,6 +1,6 @@
 
 
- ## prepare model matrix and spatial weights matrix for the bayesian model ##
+ ## prepare model matrix and spatial weights matrix for local empirical bayes estimates ##
 
 # load packages ====
 
