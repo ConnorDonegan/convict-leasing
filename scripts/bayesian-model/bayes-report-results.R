@@ -29,23 +29,22 @@ gather_intervals <- function(lwr, upr) {
 
 dtable <- d %>%
   # filter(name %in% cnties) %>%
-  dplyr::select(name, plantation_belt, sents, expected_sents, Estimate, srate, rawratio, sratio, lwr, upr, eb_ratio) %>%
+  dplyr::select(name, plantation_belt, sents, expected_sents, Estimate, srate, rawratio, sratio, lwr, upr) %>%
   mutate_if(is.numeric, round, digits = 2) %>%
-  arrange(desc(eb_ratio)) %>%
+  arrange(desc(sratio)) %>%
   mutate(cred_interval = gather_intervals(lwr, upr)) %>%
   transmute(County = name,
             Plantation_Belt = plantation_belt,
          Sentences = sents,
          Expected_Sentences = round(expected_sents),
-         Estimate = Estimate,
+         Model_Estimate = Estimate,
     Sentencing_Rate = srate,
     Raw_SIR = rawratio,
     Model_SIR = sratio,
-    cred_intervals = cred_interval,
-    eb_ratio = eb_ratio
+    cred_intervals = cred_interval
     ) %>%
   left_join(urban_counties) %>%
-  as.tibble %>% View
+  as.tibble
 
 save(dtable, file = "data/table-of-model-results.Rdata")
 
@@ -54,7 +53,7 @@ theme_set(  theme_bw() +
                     plot.title = element_text(size = 12.5),
                     axis.title = element_text(size = 10)))
 
-d %>%
+confidence_plot <- d %>%
   arrange(sratio) %>%
   mutate(name = factor(name, ordered = T, levels = name)) %>%
   select(name, rawratio, sratio, eb_ratio, lwr, upr, plantation_belt) %>%
@@ -77,33 +76,7 @@ d %>%
                                 "Bayesian\nModel"),
                      name = "Estimate") +
   labs(y = NULL, x = NULL,
-       title = "Standardized sentencing ratios with 95% credible intervals") +
-  coord_flip() +
-  # theme_classic() +
-  theme(plot.title = element_text(size = 11),
-        legend.title = element_text(size = 9),
-        legend.position = c(.8, .33)) 
-
-  
-  
-  
-  geom_point(aes(name, rawratio), col = "darkgray") +
-  geom_hline(yintercept = 1, alpha = .5) +
-  geom_point(aes(name, sratio), col = "firebrick") +
-  
-  geom_point(aes(name, eb_ratio), col = "pink") +
-  
-  geom_errorbar(aes(name, ymin = lwr, ymax = upr,
-                    col = factor(plantation_belt)),
-                width = .2) +
-  scale_y_continuous(breaks = seq(0, 5, by = 0.5)) +
-  scale_color_manual(name = "Plantation\nBelt",
-                     values = c("darkgray", "purple2"),
-                     breaks = c("0", "1"),
-                     labels = c("No", "Yes")) +
-  labs(y = "Standardized Sentencing Ratio", x = "",
-       caption = "Raw ratios are the gray points, model-predicted estimates are the red points.",
-       title = "Standardized sentencing ratios with 95% credible intervals") +
+       title = "Standardized sentencing ratios with 95% Bayesian credible intervals") +
   coord_flip() +
   # theme_classic() +
   theme(plot.title = element_text(size = 11),
