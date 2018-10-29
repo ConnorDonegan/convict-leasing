@@ -32,7 +32,11 @@ fl <- as(fl, "Spatial")
 FLaea <- "+proj=aea +lat_1=24 +lat_2=31.5 +lat_0=24 +lon_0=-84 +x_0=400000 +y_0=0 +ellps=GRS80 +units=m +no_defs" 
 fl <- spTransform(fl, CRS(FLaea))
 
-# merge shape with data 
+# merge shape with data ====
+
+fl <- merge(fl, dd, by = "name")
+
+# plantation belt boundaries ==== 
 
 # fl <- merge(fl, dd, by = "name")
 # plantation_belt <- fl[which(fl$Plantation_Belt == 1), ]
@@ -135,7 +139,7 @@ plantation_map <- plantation_map +
 
  # map SIRs
 sir_map <- tm_shape(fl) +
-  tm_fill("SIR",
+  tm_fill("Model_SIR",
           title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
           style = "cont",
           palette = pal,
@@ -196,6 +200,5 @@ sir_map <- sir_map +
              fontsize = .75) 
 
 
-current.mode <- tmap_mode("plot")
-tmap_arrange(w1, w2, w3, w4)
-tmap_mode(current.mode)
+
+
