@@ -60,9 +60,9 @@ fl@data <- inner_join(fl@data, sents, by = "name")
 
 sents <- fl@data %>%
   mutate( expected_sents = wpop*wrate + bpop*brate,
-    eb_Rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est
+    eb_rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est
     ) %>%
-  mutate(eb_ratio = eb_Rate*pop / expected_sents,
+  mutate(eb_ratio = eb_rate*pop / expected_sents,
          raw_ratio = sents / expected_sents) %>%
   mutate(plantation_belt = factor(plantation_belt),
          log_expectation = log(expected_sents),

@@ -14,6 +14,7 @@ fit1 <- brm(form1,
             cores = 3,
             control = control,
             family = poisson())
+
 save(fit1, file = "bayesian-models/fit1.Rdata")
 
   # same but sd is distinct within and outside of the plantation belt

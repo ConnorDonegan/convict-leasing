@@ -1,11 +1,12 @@
 
 library(brms)
 library(tidyverse)
+
 load("bayesian-models/fit2.Rdata")
 load("data/sents-model-data.Rdata")
 
 d <- cbind(fit2$data, predict(fit2, probs = c(.05, .95))) %>%
-  inner_join(dplyr::select(sents, name, expected_sents, pop),
+  inner_join(dplyr::select(sents, name, expected_sents, pop, eb_ratio),
              by = "name") %>%
   mutate(Estimate = round(Estimate),
     srate = 1e3*(Estimate/pop),
@@ -20,19 +21,18 @@ urban_counties <- tibble(County = c("ESCAMBIA", "LEON", "DUVAL", "HILLSBOROUGH",
 
 # table of observed sentences, estimates, SIRS and 95% credible intervals
 
-gather_intervals <- function(x, y, z) {
+gather_intervals <- function(lwr, upr) {
   paste0(
-    x,
-    " [", y, ", ", z, "]" 
+    "[", lwr, ", ", upr, "]" 
   )
 }
 
 dtable <- d %>%
   # filter(name %in% cnties) %>%
-  dplyr::select(name, plantation_belt, sents, expected_sents, Estimate, srate, rawratio, sratio, lwr, upr) %>%
+  dplyr::select(name, plantation_belt, sents, expected_sents, Estimate, srate, rawratio, sratio, lwr, upr, eb_ratio) %>%
   mutate_if(is.numeric, round, digits = 2) %>%
-  arrange(desc(sratio)) %>%
-  mutate(sratio = gather_intervals(sratio, lwr, upr)) %>%
+  arrange(desc(eb_ratio)) %>%
+  mutate(cred_interval = gather_intervals(lwr, upr)) %>%
   transmute(County = name,
             Plantation_Belt = plantation_belt,
          Sentences = sents,
@@ -40,10 +40,12 @@ dtable <- d %>%
          Estimate = Estimate,
     Sentencing_Rate = srate,
     Raw_SIR = rawratio,
-    Model_SIR = sratio
+    Model_SIR = sratio,
+    cred_intervals = cred_interval,
+    eb_ratio = eb_ratio
     ) %>%
   left_join(urban_counties) %>%
-  as.tibble
+  as.tibble %>% View
 
 save(dtable, file = "data/table-of-model-results.Rdata")
 
@@ -52,13 +54,45 @@ theme_set(  theme_bw() +
                     plot.title = element_text(size = 12.5),
                     axis.title = element_text(size = 10)))
 
-confidence_plot <- d %>%
+d %>%
   arrange(sratio) %>%
   mutate(name = factor(name, ordered = T, levels = name)) %>%
+  select(name, rawratio, sratio, eb_ratio, lwr, upr, plantation_belt) %>%
+  gather(key = key, value = value, -c(name, lwr, upr, plantation_belt)) %>%
   ggplot() +
+  geom_point(aes(name, value, col = key)) +
+  geom_hline(yintercept = 1, alpha = .5) +
+  geom_errorbar(aes(name, ymin=lwr, ymax = upr),
+                col = "purple1",
+                alpha = .2,
+                width = .2) +
+  scale_y_continuous(breaks = seq(0, 5, by = 0.5)) +
+  scale_color_brewer(type = "qual", 
+                     palette  = 2,
+                     breaks = c("rawratio",
+                                "eb_ratio",
+                                "sratio"),
+                     labels = c("Raw", 
+                                "Local\nEmpirical\nBayes", 
+                                "Bayesian\nModel"),
+                     name = "Estimate") +
+  labs(y = NULL, x = NULL,
+       title = "Standardized sentencing ratios with 95% credible intervals") +
+  coord_flip() +
+  # theme_classic() +
+  theme(plot.title = element_text(size = 11),
+        legend.title = element_text(size = 9),
+        legend.position = c(.8, .33)) 
+
+  
+  
+  
   geom_point(aes(name, rawratio), col = "darkgray") +
   geom_hline(yintercept = 1, alpha = .5) +
   geom_point(aes(name, sratio), col = "firebrick") +
+  
+  geom_point(aes(name, eb_ratio), col = "pink") +
+  
   geom_errorbar(aes(name, ymin = lwr, ymax = upr,
                     col = factor(plantation_belt)),
                 width = .2) +
