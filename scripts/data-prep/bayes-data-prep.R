@@ -52,16 +52,17 @@ sents <- dcounty %>%
                    plantation_belt = unique(plantation_belt)) %>%
   ungroup() 
 
-# ensure row index of sents data conforms to spatial weights matrix #
+# ensure row index of sentencing data conforms to spatial weights matrix #
+fl@data <- inner_join(fl@data, sents, by = "name")
+
 neighbs <- poly2nb(fl)
 W <- nb2mat(neighbs, style = "B")
-
-fl@data <- inner_join(fl@data, sents, by = "name")
+row.names(W) <- fl$name 
 
 sents <- fl@data %>%
   mutate( expected_sents = wpop*wrate + bpop*brate,
     eb_rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est
-    ) %>%
+    ) %>% 
   mutate(eb_ratio = eb_rate*pop / expected_sents,
          raw_ratio = sents / expected_sents) %>%
   mutate(plantation_belt = factor(plantation_belt),
@@ -69,10 +70,9 @@ sents <- fl@data %>%
          pop = round(pop),
          name = factor(name))
 
-row.names(W) <- fl$name 
-
 save(sents, file = "data/sents-model-data.Rdata")
 save(W, file = "data/spatial-weights-matrix.Rdata")
+save(neighbs, file = "data/spatial-neighbors.Rdata")
 
 
 

@@ -1,6 +1,7 @@
 
 library(tidyverse)
 library(brms)
+
 load("data/sents-model-data.Rdata")
 
   # model standard deviation of the intercepts
@@ -12,6 +13,7 @@ control <- list(max_treedepth = 20,
 fit1 <- brm(form1,
             data = sents,
             cores = 3,
+            iter = 3e3,
             control = control,
             family = poisson())
 
@@ -23,7 +25,16 @@ form2 <- bf(sents ~ 1 + (1 | gr(name, by = plantation_belt)) + offset(log_expect
 fit2 <- brm(form2,
             data = sents, 
             cores = 3,
+            iter = 5e3,
+            warmup = 2e3,
             control = control,
             family = poisson())
 
 save(fit2, file = "bayesian-models/fit2.Rdata")
+
+  # add an ICAR component for spatial smoothing
+load("bayesian-models/fit2.Rdata")
+load("data/spatial-weights-matrix.Rdata")
+fit3 <- update(fit2, autocor = cor_car(W, ~1|name))
+save(fit3, file = "bayesian-models/fit3.Rdata")
+

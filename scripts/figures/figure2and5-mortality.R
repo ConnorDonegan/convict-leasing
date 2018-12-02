@@ -19,15 +19,15 @@ source("scripts/figures/custom-plot-theme.R")
 prison.deaths <- read_csv("data/prisoner-age-at-time-of-death-1905-1909.csv")
 
 age_plot <- prison.deaths %>%
-  ggplot() +
-  geom_histogram(aes(Age), 
-                 stat = "count",
+  ggplot(aes(Age)) +
+  geom_histogram(binwidth=3,
+                 # stat = "count",
                  fill = "gray20",
                  col = "gray40") +
   scale_x_continuous(breaks = seq(10, 70, by = 5)) +
-  scale_y_continuous(breaks = seq(0, 10, 1)) +
+  scale_y_continuous(breaks = seq(0, 25, 1)) +
   labs(title = "State prison deaths by age, 1905-1909",
-       x = "Age", y = "Count") +
+       x = "Age", y = "Deaths") +
   theme_cust +
   theme(panel.grid.minor.y = element_blank())
 
@@ -82,7 +82,7 @@ mortality_fig <- gridExtra::arrangeGrob(deaths, mortality_rate, ncol = 2)
 ggsave("figures/figure2-annual-mortality.png", 
        mortality_fig,
        width = 11,
-       height = 6, 
+       height = 5.66, 
        dpi = 650)
 
 

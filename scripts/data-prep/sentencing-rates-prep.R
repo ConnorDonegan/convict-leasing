@@ -56,6 +56,7 @@ lapply(pkgs, library, character.only=TRUE)
   # In the process, errors in the original file were identified.
   # See that racial components of each county population sum to the total county population.
 census <- read.csv("data/FL_pop_char.csv")
+
 attach(census)
 # all 1920 figures are consistent except for Pinellas (off by 6 people). This is an error in the original census file.
 Pinellas <- which(pop_native_white_1920 + pop_foreign_white_1920 + pop_other_1920 + pop_black_1920 != pop_1920)
@@ -100,7 +101,7 @@ sentences <- census[, sents.index]
   # See Wedden et al., Evaluating Linearly Interpolated Intercensal Estimates...',
   # Population Research and Policy Review (2015).
   # Half of the counties have white population over 5,000 in 1900,
-  # Only about 70% of black population counts were over 5,000 in 1900.
+  # Only about 70% of black population counts were under 5,000 in 1900.
 quantile(black.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
 quantile(white.population$pop_1900, na.rm=T, probs = seq(0, 1, .1))
 
@@ -147,7 +148,7 @@ sentences <- sentences %>%
   merge(white.population, by = c("county", "year")) %>%
   mutate(plantation_belt = ifelse(pct_agricultural_1910 > 33, 1, 0)) %>%
   filter(year > 1904 & year < 1920) %>%
-  as.tibble()
+  as.tibble
 
 # save ====
 

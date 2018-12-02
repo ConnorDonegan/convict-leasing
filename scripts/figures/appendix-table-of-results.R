@@ -47,3 +47,23 @@ dtable <- d %>%
   as.tibble
 
 save(dtable, file = "data/table-of-model-results.Rdata")
+rm(list=ls())
+
+ # produce latex table for the Appendix 
+library(xtable)
+load("data/table-of-model-results.Rdata")
+
+dtable %>%
+  select(-c(Sentencing_Rate, City)) %>%
+  mutate(County = str_to_title(County)) %>%
+  # head(5) %>%
+  xtable(floating = TRUE, 
+         caption = "County sentencing data",
+         digits = c(0, 1, 1, 0, 0, 0, 2, 2, 1),
+         align = c("l", rep("c", 7), "r"),
+         latex.environments = "center") %>%
+  print(include.rownames = FALSE)
+
+
+
+
