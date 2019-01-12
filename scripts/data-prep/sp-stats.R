@@ -4,8 +4,8 @@
 
 # load packages ====
 
-pkgs <- c("tidyverse", "classInt", "RColorBrewer", "GISTools", "maptools", "sf", 
-          "ggmap", "tmap", "USAboundaries", "spdep", "brms")
+pkgs <- c("tidyverse", "GISTools", "maptools", "sf", 
+          "USAboundaries", "USAboundariesData", "spdep")
 lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
 # load and set projection for the historic map of Florida ====
@@ -13,8 +13,11 @@ lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 fl <- us_counties(map_date="1910-01-01", 
                   resolution="high", 
                   states = "Florida") 
+
 fl <- as(fl, "Spatial")
+
 FLaea <- "+proj=aea +lat_1=24 +lat_2=31.5 +lat_0=24 +lon_0=-84 +x_0=400000 +y_0=0 +ellps=GRS80 +units=m +no_defs" 
+
 fl <- spTransform(fl, CRS(FLaea))
 
 # load data and calculate mean (state wide) sentencing rates by race during the convict leasing program ====
@@ -49,31 +52,41 @@ sents <- dcounty %>%
                    pop = sum(population, na.rm=T),
                    wpop = sum(population_white, na.rm = T),
                    bpop = sum(population_black, na.rm = T),
-                   plantation_belt = unique(plantation_belt)) %>%
+                   plantation_belt = unique(plantation_belt),
+                   pct_ag_1910 = unique(pct_agricultural_1910)) %>%
+  mutate(expected_sents = wpop*wrate + bpop*brate) %>%
   ungroup() 
 
 # ensure row index of sentencing data conforms to spatial weights matrix #
 fl@data <- inner_join(fl@data, sents, by = "name")
-
 neighbs <- poly2nb(fl)
 W <- nb2mat(neighbs, style = "B")
 row.names(W) <- fl$name 
 
-sents <- fl@data %>%
-  mutate( expected_sents = wpop*wrate + bpop*brate,
-    eb_rate = EBlocal(ri = sents, ni = pop, nb = neighbs)$est
-    ) %>% 
-  mutate(eb_ratio = eb_rate*pop / expected_sents,
-         raw_ratio = sents / expected_sents) %>%
-  mutate(plantation_belt = factor(plantation_belt),
-         log_expectation = log(expected_sents),
-         pop = round(pop),
-         name = factor(name))
+# calculate local empirical bayes
+# using expected value as 'at risk population' to produce risk ratios or SIRs 
+lEB <- EBlocal(ri = fl@data$sents, ni = fl@data$expected_sents, nb = neighbs)
+fl@data$LEB <- lEB$est
+fl@data$SSR_raw <- lEB$raw
 
-save(sents, file = "data/sents-model-data.Rdata")
-save(W, file = "data/spatial-weights-matrix.Rdata")
-save(neighbs, file = "data/spatial-neighbors.Rdata")
+spplot(fl[,'LEB'])
 
+# get local moran's I test statistics to identify clusters of high and low risk ratios
+lisa <- localmoran(lEB$est, listw = nb2listw(neighbs), p.adjust.method = "holm")
+lisa <- as.tibble(lisa)
+
+# store the Z scores and p-values
+fl@data$Z.i <- lisa$Z.Ii
+fl@data$P.i <- lisa$`Pr(z > 0)`
+
+spplot(fl[,'sig'])
+
+# aple instead of I---gives substantively similar results as Moran's I for our purposes.
+fl@data$aple <- localAple(scale(lEB$est)[,1], listw = nb2listw(neighbs))
+
+spplot(fl[,'aple'])
+
+write_rds(fl, path = "data/florida-1910-sp.rds")
 
 
 
