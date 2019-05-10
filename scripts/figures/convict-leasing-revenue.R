@@ -9,7 +9,7 @@
 
 
 library(tidyverse)
-
+source("scripts/figures/custom-plot-theme.R")
 revenue <- read_csv("data/convict-leasing-revenue.csv")   
 
 # this is just to draw a continuous line over missing values.
@@ -31,8 +31,9 @@ rev_plot <- ggplot(revenue, aes(x=year, y=revenue)) +
         panel.grid.minor.x=element_blank(),
         panel.grid.major.x=element_blank(),
         panel.grid.major.y = element_line(size = .5)) +
-  geom_hline(yintercept = 0) 
+  geom_hline(yintercept = 0) +
+  theme_cust
 
-ggsave("figures/figure7-revenue.png", 
+ggsave("figures/supplementary-convict-leasing-revenue.png", 
        rev_plot,
        width = 7.5, height = 6, dpi = 650) 

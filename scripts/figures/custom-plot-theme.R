@@ -3,6 +3,7 @@
 library(tidyverse)
 theme_cust <- theme_bw() +
   theme(axis.title = element_text(size=11),
+        axis.text = element_text(size = 12.5),
         panel.grid.major.x = element_blank(), 
         panel.grid.minor.x  = element_blank(),
         panel.grid.major.y = element_line( size=.05, color="grey" ),

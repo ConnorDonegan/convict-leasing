@@ -6,6 +6,8 @@ library(tidyverse)
 library(gridExtra)
 source("scripts/figures/custom-plot-theme.R")
 
+penal_data <- read_csv("data/prisoner_char.csv")
+
 origins <- dplyr::select(penal_data,
                          year, florida, alabama, georgia, northcarolina, southcarolina,
                          other_south, other_regioncountry, not_given) %>%
@@ -52,8 +54,9 @@ place_plot <- origins %>%
                      name = NULL) +
   guides(fill = guide_legend(reverse=FALSE)) +
   labs(x=NULL, 
-       y = NULL, 
-       title = "State prison sentences by prisoner's place of origin") +
+      y = NULL
+       # title = "State prison sentences by prisoner's place of origin"
+       ) +
   theme(axis.ticks.y = element_blank(), 
         axis.ticks.x=element_blank()) +
   theme_cust +

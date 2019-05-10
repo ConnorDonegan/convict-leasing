@@ -16,18 +16,18 @@ source("scripts/figures/custom-plot-theme.R")
 
  # mortality by age (only available from 1905-1909)
 
-prison.deaths <- read_csv("data/prisoner-age-at-time-of-death-1905-1909.csv")
+prison_deaths <- read_csv("data/prisoner-age-at-time-of-death-1905-1909.csv")
 
-age_plot <- prison.deaths %>%
-  ggplot() +
-  geom_histogram(aes(Age), 
-                 stat = "count",
+age_plot <- prison_deaths %>%
+  ggplot(aes(Age)) +
+  geom_histogram(binwidth=3,
+                 # stat = "count",
                  fill = "gray20",
                  col = "gray40") +
   scale_x_continuous(breaks = seq(10, 70, by = 5)) +
-  scale_y_continuous(breaks = seq(0, 10, 1)) +
-  labs(title = "State prison deaths by age, 1905-1909",
-       x = "Age", y = "Count") +
+  scale_y_continuous(breaks = seq(0, 25, 1)) +
+  labs(title = NULL,#"State prison deaths by age, 1905-1909",
+       x = "Age", y = NULL) +
   theme_cust +
   theme(panel.grid.minor.y = element_blank())
 
@@ -50,7 +50,7 @@ deaths <- penal_data %>%
                      lim = c(1870, 1925)) +
   scale_y_continuous(breaks = seq(0, 80, 5),
                      name = NULL) +
-  ggtitle("State prison deaths") +
+  # ggtitle("State prison deaths") +
   theme_cust
 
  # mortality rate
@@ -72,24 +72,29 @@ mortality_rate <- penal_data %>%
                      name = NULL,
                      lim = c(0, .2)) +
   geom_point(col = 'black') +  
-  ggtitle("State prison mortality rate") +
+  # ggtitle("State prison mortality rate") +
   theme_cust
 
 # save figure ====
 
+ggsave("figures/figure2a-deaths.png", 
+       deaths,
+       width = 11,
+       height = 5.66, 
+       dpi = 650)
+
+ggsave("figures/figure2b-mortality-rate.png", 
+       mortality_rate,
+       width = 11,
+       height = 5.66, 
+       dpi = 650)
+#
 mortality_fig <- gridExtra::arrangeGrob(deaths, mortality_rate, ncol = 2)
 
 ggsave("figures/figure2-annual-mortality.png", 
        mortality_fig,
        width = 11,
-       height = 6, 
+       height = 5.66, 
        dpi = 650)
-
-
-
-
-
-
-
 
 
