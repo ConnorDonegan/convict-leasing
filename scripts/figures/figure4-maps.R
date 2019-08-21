@@ -4,7 +4,8 @@
 # load packages ====
 
 pkgs <- c("tidyverse", "classInt", "RColorBrewer", "GISTools", "maptools", "sf", "magick",
-          "ggmap", "tmap", "USAboundaries", "spdep", "sp", "raster", "scales")
+          # "ggmap", 
+          "tmap", "USAboundaries", "USAboundariesData", "spdep", "sp", "raster", "scales")
 lapply(pkgs, require, character.only=TRUE); rm(pkgs)
 
 # load data ===== 
@@ -21,7 +22,8 @@ dd <- dtable %>%
       transmute(name = str_to_upper(county), 
                 pct_ag = pct_agricultural_1910) %>%
       distinct
-  ) %>% as.tibble
+  ) %>% 
+  as_tibble
 
 # load and set projection for the historic map of Florida ====
 
@@ -80,13 +82,13 @@ cities_xmod = c(0, 0, .5, -.1, -.25)
 cities_ymod = .5
 
 # map the plantation belt and largest cities 
-brks <- classIntervals(fl@data$pct_ag, n = 5, style = "jenks")$brks
+# brks <- classIntervals(fl@data$pct_ag, n = 5, style = "jenks")$brks
 
 plantation_map <- tm_shape(fl) +
   tm_fill("pct_ag",
           title = "Percent of Land\nArea in Agriculture,\n1910",
-          # style =  "cont",
-          breaks = brks,
+          style =  "cont",
+          # breaks = brks,
           legend.reverse = TRUE,
           palette = pal) +
   tm_borders(col="gray35") +
@@ -146,13 +148,13 @@ tmap_save(tm = plantation_map,
           units = "in", width = 6.75)
 
  # map SIRs
-brks <- c(0, .5, 1, 1.5,  2, 2.5, 3)
+# brks <- c(0, .5, 1, 1.5,  2, 2.5, 3)
 
 sir_map <- tm_shape(fl) +
   tm_fill("Model_SIR",
           title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
-          # style = "cont",
-          breaks = brks,
+          style = "cont",
+          # breaks = brks,
           palette = pal,
           legend.reverse = TRUE,
           frame = F#,
@@ -175,7 +177,7 @@ sir_map <- sir_map +
   tm_borders(col="gray35") +
   tm_shape(plantation_belt) +
   tm_borders(col = belt.col,
-             lwd = 2) 
+             lwd = 2)
 
  # add cities
 sir_map <- sir_map + 

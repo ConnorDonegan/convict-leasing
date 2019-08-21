@@ -377,7 +377,7 @@ fl$SIR_zero_cntr <- fl$SIR - 1 # for color scale
 
 tm_shape(fl) +
   tm_fill("SIR",
-          title = "Standardized State\nPrison Sentencing\nRates, 1905-1919",
+          title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
           style = "cont",
           palette = pal,
           legend.reverse = TRUE,
@@ -434,7 +434,7 @@ tm_shape(fl) +
 
 standardized_map <-  tm_shape(fl) +
   tm_fill("SIR_zero_cntr",
-          title = "Standardized State\nPrison Sentencing\nRates, 1905-1919",
+          title = "Standardized State\nPrison Sentencing\nRatios, 1905-1919",
           style = "cont",
           palette = "-RdBu",
           frame = F,

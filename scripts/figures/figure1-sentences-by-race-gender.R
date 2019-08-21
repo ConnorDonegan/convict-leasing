@@ -30,7 +30,7 @@ sentencing_plot <- penal_data %>%
                      name = NULL) +
   scale_y_continuous(breaks = seq(0, 500, 50),
                      name = NULL) +
-  ggtitle("State prison sentences") +
+  # ggtitle("State prison sentences") +
   theme_cust +
   coord_cartesian(ylim = c(0, 415))  +
   scale_shape_manual(breaks = c("black_male", "white_male", 

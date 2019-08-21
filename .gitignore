@@ -1,3 +1,5 @@
+census-1910/
+census-1920/
 .Rproj.user
 .Rhistory
 .RData
@@ -6,5 +8,8 @@
 *make-maps-color.R
 *.zip
 *.docx
-LABOR/
+*.rds
+*.Rdata
+LABOR*/
+bayesian-models/
 example-bayes-gamma-prior-prop-test.R

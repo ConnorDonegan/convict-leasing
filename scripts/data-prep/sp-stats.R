@@ -22,18 +22,25 @@ fl <- spTransform(fl, CRS(FLaea))
 
 # load data and calculate mean (state wide) sentencing rates by race during the convict leasing program ====
 
-dcounty <- read_csv("data/sentencing.csv")
+# the full period is defined by between(1904, 1920)
+start_year <- 1904  
+end_year <- 1911
+
+
+dcounty <- read_csv("data/sentencing.csv") %>%
+  dplyr::filter(between(year, start_year, end_year))
 
 bpop <- sum(dcounty$population_black, na.rm=T)
 wpop <- sum(dcounty$population_white, na.rm=T)
 
 dstate <- read_csv("data/prisoner_char.csv")
+
 dstate <- dstate %>%
   dplyr::select(year, black_male, white_male, black_female, white_female) %>%
   transmute(Year = year,
             black = black_male + black_female,
             white = white_male + white_female) %>%
-  filter(Year > 1904 & Year < 1920)
+  filter(Year > start_year & Year < end_year)
 
 bsents <- sum(dstate$black, na.rm=T)
 wsents <- sum(dstate$white, na.rm=T)
@@ -46,7 +53,7 @@ wrate <- (wsents / wpop)
 sents <- dcounty %>%
   mutate(name = toupper(county),
          population = population_black + population_white) %>%
-  filter(year > 1904 & year < 1920) %>% 
+  # filter(year > 1904 & year < 1920) %>% 
   group_by(name) %>%
   dplyr::summarize(sents = sum(sentences, na.rm=T),
                    pop = sum(population, na.rm=T),
@@ -73,16 +80,18 @@ spplot(fl[,'LEB'])
 
 # get local moran's I test statistics to identify clusters of high and low risk ratios
 lisa <- localmoran(lEB$est, listw = nb2listw(neighbs), p.adjust.method = "holm")
-lisa <- as.tibble(lisa)
+lisa <- as_tibble(lisa)
 
 # store the Z scores and p-values
 fl@data$Z.i <- lisa$Z.Ii
 fl@data$P.i <- lisa$`Pr(z > 0)`
 
+fl@data$sig <- fl@data$P.i < .1
+
 spplot(fl[,'sig'])
 
 # aple instead of I---gives substantively similar results as Moran's I for our purposes.
-fl@data$aple <- localAple(scale(lEB$est)[,1], listw = nb2listw(neighbs))
+fl@data$aple <- localAple(scale(lEB$est, scale = FALSE)[,1], listw = nb2listw(neighbs, style = "W"))
 
 spplot(fl[,'aple'])
 
