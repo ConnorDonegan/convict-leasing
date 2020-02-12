@@ -15,7 +15,7 @@ sentencing_plot <- penal_data %>%
            factor(rage, ordered = TRUE, 
                   levels = c("black_male", "white_male", "black_female", "white_female"))
   ) %>%
-  filter(year > 1882 & year < 1925) %>%
+  filter(year > 1882 & year < 1926) %>%
   na.omit() %>%
   ggplot( aes(year, prisoners, group = rage)) +
   geom_line( aes(year, prisoners, colour=rage), 
@@ -38,9 +38,12 @@ sentencing_plot <- penal_data %>%
                      labels = c("Black male", "White male",
                                 "Black female", "White female"),
                      values = 1:4) +
-  scale_color_manual(values = rep("gray25", 4)) 
+  scale_color_manual(values = rep("gray25", 4)) +
+  theme(legend.text = element_text(size = 13))
 
-ggsave("figures/figure1-sentences-by-race-gender.png", 
+dir <- "~/repo/convict-leasing/preprint/figures"
+ggsave(#"figures/figure1-sentences-by-race-gender.png", 
+       file.path(dir, "figure1-sentences-by-race-gender.png"),
        sentencing_plot,
        width = 7.5, 
        height = 5.66, 

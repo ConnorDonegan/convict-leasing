@@ -12,4 +12,6 @@ census-1920/
 *.Rdata
 LABOR*/
 bayesian-models/
+preprint/
+*.pdf
 example-bayes-gamma-prior-prop-test.R

@@ -74,12 +74,16 @@ capitol <- SpatialPointsDataFrame(xy, data = capitol[ , -4])
 # set color (gray scale) parameters ==== 
 
 bg.color = "gray95"
-pal = "Greys"
+#pal = "Greys"
 neighbors.col = "gray90"
 belt.col = "gray10"
-leg.title.size = 1.2
+leg.title.size = 2
+leg.text.size = 1
 cities_xmod = c(0, 0, .5, -.1, -.25)
 cities_ymod = .5
+
+# save to Latex figures folder for the preprint #
+dir <- "~/repo/convict-leasing/preprint/figures"
 
 # map the plantation belt and largest cities 
 # brks <- classIntervals(fl@data$pct_ag, n = 5, style = "jenks")$brks
@@ -90,11 +94,11 @@ plantation_map <- tm_shape(fl) +
           style =  "cont",
           # breaks = brks,
           legend.reverse = TRUE,
-          palette = pal) +
+          palette = "BuGn") +
   tm_borders(col="gray35") +
   tm_legend(
     legend.position = c("left", "bottom"),
-    legend.text.size = .8,
+    legend.text.size = leg.text.size,
     legend.title.size = leg.title.size) +
   tm_layout(bg.color = bg.color,
             frame.double.line = F,
@@ -144,31 +148,30 @@ plantation_map <- plantation_map +
             fontsize = .75) 
 
 tmap_save(tm = plantation_map,
-          filename = "figures/plantation-map.png",
+          filename = file.path(dir, "plantation-map.png"),
+          # filename = "figures/plantation-map.png",
           units = "in", width = 6.75)
 
  # map SIRs
-# brks <- c(0, .5, 1, 1.5,  2, 2.5, 3)
-
 sir_map <- tm_shape(fl) +
   tm_fill("Model_SIR",
           title = "Standardized State\nPrison Sentencing\nRatios, 1905-1910",
           style = "cont",
-          # breaks = brks,
-          palette = pal,
+          midpoint = 1,
+          palette = "seq",
           legend.reverse = TRUE,
-          frame = F#,
-          # labels = c("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
+          frame = F
   ) +
   tm_borders(col="gray35") +
   tm_legend(legend.hist.bg.color = bg.color, 
             legend.position = c("left", "bottom"),
-            legend.text.size = .8,
-            legend.title.size = 1.2) +
+            legend.text.size = leg.text.size,
+            legend.title.size = leg.title.size) +
   tm_layout(bg.color = bg.color,
             legend.hist.height=.25,
             frame.double.line = F,
-            legend.format = list(digits = 1)) 
+            legend.format = list(digits = 1)) +
+  tm_layout(aes.palette = list(seq = "-RdBu")) # RdGy PuOr
 
  # add neighboring states
 sir_map <- sir_map +
@@ -212,7 +215,8 @@ sir_map <- sir_map +
              fontsize = .75) 
 
 tmap_save(tm = sir_map,
-          filename = "figures/sir-map.png",
+          # filename = "figures/sir-map.png",
+          filename = file.path(dir, "sir-map.png"),
           units = "in", width = 6.75)
 
 # Figure 4: combine sentencing maps with magick ====
