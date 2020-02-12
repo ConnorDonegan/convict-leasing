@@ -1,9 +1,8 @@
-
-
 # sentences by prisoner place of origin
 
 library(tidyverse)
 library(gridExtra)
+library(viridis)
 source("scripts/figures/custom-plot-theme.R")
 
 penal_data <- read_csv("data/prisoner_char.csv")
@@ -54,19 +53,21 @@ place_plot <- origins %>%
                      name = NULL) +
   guides(fill = guide_legend(reverse=FALSE)) +
   labs(x=NULL, 
-      y = NULL
+      y = NULL#,
        # title = "State prison sentences by prisoner's place of origin"
        ) +
   theme(axis.ticks.y = element_blank(), 
         axis.ticks.x=element_blank()) +
   theme_cust +
-  scale_fill_brewer(breaks = place_names,
+  scale_fill_viridis_d(breaks = place_names,
                     labels = leg_labels,
-                    palette = "Greys", #"Paired",
-                    direction = -1,
+                  #  palette = "Paired", #"Greys", 
+                   # direction = -1,
                     name = NULL)
 
-ggsave("figures/figure3-origins.png", 
+dir <- "~/repo/convict-leasing/preprint/figures"
+ggsave(#"figures/figure3-origins.png", 
+       file.path(dir, "figure3-origins.png"),
        place_plot,
        width = 8.25, 
        height = 5.5, 
